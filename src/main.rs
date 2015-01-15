@@ -2,7 +2,7 @@ extern crate time;
 
 use std::os;
 use std::io::net::udp::UdpSocket;
-use std::io::net::ip::SocketAddr;
+use std::io::net::ip::{Ipv4Addr, SocketAddr};
 use std::io::net::ip::IpAddr;
 use std::num::ToPrimitive;
 use time::*;
@@ -72,14 +72,13 @@ fn process_packet(packet: &[u8], pid_name: &mut[u16], pid_cc: &mut[u16]) {
 
 fn main() {
     let args = os::args();
-    if args.len() != 3 {
+    if args.len() != 2 {
         println!("Usage:");
-        println!("prober <multicast_group> <interface_ip>");
+        println!("prober <multicast_group>");
         return;
     }
 
     let multicast_addr: IpAddr = args[1].as_slice().parse().expect("Invalid value for multicast address!");
-    let interface_addr: IpAddr = args[2].as_slice().parse().expect("Invalid value for interface address!");
 
     let mut pid_name: [u16; 10] = [0u16; 10];
     let mut pid_cc: [u16; 10] = [0u16; 10];
@@ -87,7 +86,7 @@ fn main() {
     let mut packets_received = 0i32;
     let mut last_stat_time = now().to_timespec();
 
-    let addr = SocketAddr{ ip: interface_addr, port: 1234 };
+    let addr = SocketAddr{ ip: Ipv4Addr(0, 0, 0, 0), port: 1234 };
 
     let mut socket = match UdpSocket::bind(addr) {
         Ok(s) => s,
@@ -104,7 +103,6 @@ fn main() {
     }
 
     let mut msg_buff = [0u8; 1316];
-
     loop {
         let data = socket.recv_from(&mut msg_buff);
         match data {
