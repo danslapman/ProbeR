@@ -3,3 +3,6 @@
 name = "prober"
 version = "0.0.1"
 authors = ["Daniil Smirnov <danslapman@gmail.com>"]
+
+[dependencies]
+time = "0.1.12"

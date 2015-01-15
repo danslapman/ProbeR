@@ -1,9 +1,13 @@
+extern crate time;
+
 use std::os;
 use std::io::net::udp::UdpSocket;
 use std::io::net::ip::SocketAddr;
 use std::io::net::ip::IpAddr;
+use std::num::ToPrimitive;
+use time::*;
 
-//static PACKET_STATISTICS_INTERVAL: i16 = 50000;
+static PACKET_STATISTICS_INTERVAL: i32 = 50000;
 
 fn get_pid_cc(pid_name: &[u16], pid_cc: &[u16], pid: u16) -> u16 {
     for i in range(0us, 10) {
@@ -30,6 +34,9 @@ fn set_pid_cc(pid_name: &mut[u16], pid_cc: &mut[u16], pid: u16, cc: u16) {
                 break;
             }
         }
+    }
+    if index == -1 {
+        panic!("PID array is full");
     }
     pid_cc[index as usize] = cc;
 }
@@ -76,7 +83,9 @@ fn main() {
 
     let mut pid_name: [u16; 10] = [0u16; 10];
     let mut pid_cc: [u16; 10] = [0u16; 10];
-    let first_packet_received = false;
+    let mut first_packet_received = false;
+    let mut packets_received = 0i32;
+    let mut last_stat_time = now().to_timespec();
 
     let addr = SocketAddr{ ip: interface_addr, port: 1234 };
 
@@ -91,7 +100,7 @@ fn main() {
             println!("Join error: {}", e);
             return;
         },
-        _ => ()
+        _ => println!("Joined successfully")
     }
 
     let mut msg_buff = [0u8; 1316];
@@ -105,7 +114,22 @@ fn main() {
             },
             Ok((amount, _)) => {
                 println!("Received {} bytes", amount);
+                if !first_packet_received {
+                    first_packet_received = true;
+                    last_stat_time = now().to_timespec();
+                }
                 process_packet(&msg_buff, &mut pid_name, &mut pid_cc);
+                packets_received += 1;
+
+                if packets_received == PACKET_STATISTICS_INTERVAL {
+                    let new_time = now().to_timespec();
+                    let delta = (new_time - last_stat_time).num_milliseconds().to_i32().unwrap();
+                    let pps = PACKET_STATISTICS_INTERVAL / delta;
+                    let speed = ((PACKET_STATISTICS_INTERVAL * 1316 / delta) / 1000) * 8;
+                    println!("Bitrate: {} Mbps. PPS: {} pps.", speed, pps);
+                    last_stat_time = new_time;
+                    packets_received = 0;
+                }
             }
         }
     }
