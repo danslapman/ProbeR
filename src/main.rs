@@ -87,7 +87,10 @@ fn main() {
 
     let join_res = socket.join_multicast(multicast_addr);
     match join_res {
-        Err(e) => println!("Join error: {}", e),
+        Err(e) => {
+            println!("Join error: {}", e);
+            return;
+        },
         _ => ()
     }
 
