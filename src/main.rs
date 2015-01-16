@@ -59,7 +59,7 @@ fn process_packet(packet: &[u8], pid_name: &mut[Option<u16>], pid_cc: &mut[Optio
         last_cc = get_pid_cc(pid_name, pid_cc, pid);
         if last_cc.is_some() {
             let lcc = last_cc.unwrap();
-            if 16 <= pid && pid <= 8190 && cc != lcc && (lcc != 15 && cc != 0) && payload {
+            if 16 <= pid && pid <= 8190 && cc != lcc + 1 && (lcc != 15 && cc != 0) && payload {
                 println!("CC Error in PID: {}, LastCC: {}, CC: {}", pid, lcc, cc);
             }
             if scrambled {
@@ -112,7 +112,7 @@ fn main() {
                 if first_packet_received {break;}
             },
             Ok((amount, _)) => {
-                println!("Received {} bytes", amount);
+                //println!("Received {} bytes", amount);
                 if !first_packet_received {
                     first_packet_received = true;
                     last_stat_time = now().to_timespec();
