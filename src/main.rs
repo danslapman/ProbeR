@@ -8,9 +8,10 @@ use std::num::ToPrimitive;
 use time::*;
 
 static PACKET_STATISTICS_INTERVAL: i32 = 50000;
+static MAX_PID_COUNT: usize = 8192;
 
 fn get_pid_cc(pid_name: &[Option<u16>], pid_cc: &[Option<u16>], pid: u16) -> Option<u16> {
-    for i in range(0us, 10) {
+    for i in range(0us, MAX_PID_COUNT) {
         if pid_name[i].is_some() && pid_name[i].unwrap() == pid {
             return pid_cc[i];
         }
@@ -20,14 +21,14 @@ fn get_pid_cc(pid_name: &[Option<u16>], pid_cc: &[Option<u16>], pid: u16) -> Opt
 
 fn set_pid_cc(pid_name: &mut[Option<u16>], pid_cc: &mut[Option<u16>], pid: u16, cc: u16) {
     let mut index: Option<usize> = None; 
-    for i in range(0us, 10) {
+    for i in range(0us, MAX_PID_COUNT) {
         if pid_name[i].is_some() && pid_name[i].unwrap() == pid {
             index = Some(i);
             break;
         }
     }
     if index.is_none() {
-        for i in range(0us, 10) {
+        for i in range(0us, MAX_PID_COUNT) {
             if pid_name[i].is_none() {
                 index = Some(i);
                 pid_name[i] = Some(pid);
@@ -81,8 +82,8 @@ fn main() {
 
     let multicast_addr: IpAddr = args[1].as_slice().parse().expect("Invalid value for multicast address!");
 
-    let mut pid_name: [Option<u16>; 10] = [None; 10];
-    let mut pid_cc: [Option<u16>; 10] = [None; 10];
+    let mut pid_name: [Option<u16>; 8192] = [None; 8192];
+    let mut pid_cc: [Option<u16>; 8192] = [None; 8192];
     let mut first_packet_received = false;
     let mut packets_received = 0i32;
     let mut last_stat_time = now().to_timespec();
