@@ -7,7 +7,7 @@ use std::io::net::ip::IpAddr;
 use std::num::ToPrimitive;
 use time::*;
 
-static PACKET_STATISTICS_INTERVAL: i32 = 50000;
+static PACKET_STATISTICS_INTERVAL: u32 = 50000;
 static MAX_PID_COUNT: usize = 8192;
 
 fn get_pid_cc(pid_name: &[Option<u16>], pid_cc: &[Option<u16>], pid: u16) -> Option<u16> {
@@ -36,10 +36,7 @@ fn set_pid_cc(pid_name: &mut[Option<u16>], pid_cc: &mut[Option<u16>], pid: u16, 
             }
         }
     }
-    if index.is_none() {
-        panic!("PID array is full");
-    }
-    pid_cc[index.unwrap()] = Some(cc);
+    pid_cc[index.expect("PID array is full")] = Some(cc);
 }
 
 fn process_packet(packet: &[u8], pid_name: &mut[Option<u16>], pid_cc: &mut[Option<u16>]) {
@@ -85,7 +82,7 @@ fn main() {
     let mut pid_name: [Option<u16>; 8192] = [None; 8192];
     let mut pid_cc: [Option<u16>; 8192] = [None; 8192];
     let mut first_packet_received = false;
-    let mut packets_received = 0i32;
+    let mut packets_received = 0u32;
     let mut last_stat_time = now().to_timespec();
 
     let addr = SocketAddr{ ip: Ipv4Addr(0, 0, 0, 0), port: 1234 };
@@ -123,7 +120,7 @@ fn main() {
 
                 if packets_received == PACKET_STATISTICS_INTERVAL {
                     let new_time = now().to_timespec();
-                    let delta = (new_time - last_stat_time).num_milliseconds() as i32;
+                    let delta = (new_time - last_stat_time).num_milliseconds() as u32;
                     let pps = PACKET_STATISTICS_INTERVAL / delta;
                     let speed = ((PACKET_STATISTICS_INTERVAL * 1316 / delta) / 1000) * 8;
                     println!("Bitrate: {} Mbps. PPS: {} pps.", speed, pps);
