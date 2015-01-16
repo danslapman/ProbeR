@@ -19,26 +19,26 @@ fn get_pid_cc(pid_name: &[Option<u16>], pid_cc: &[Option<u16>], pid: u16) -> Opt
 }
 
 fn set_pid_cc(pid_name: &mut[Option<u16>], pid_cc: &mut[Option<u16>], pid: u16, cc: u16) {
-    let mut index = -1i16;
+    let mut index: Option<usize> = None; 
     for i in range(0us, 10) {
         if pid_name[i].is_some() && pid_name[i].unwrap() == pid {
-            index = i as i16;
+            index = Some(i);
             break;
         }
     }
-    if index == -1i16 {
+    if index.is_none() {
         for i in range(0us, 10) {
             if pid_name[i].is_none() {
-                index = i as i16;
+                index = Some(i);
                 pid_name[i] = Some(pid);
                 break;
             }
         }
     }
-    if index == -1 {
+    if index.is_none() {
         panic!("PID array is full");
     }
-    pid_cc[index as usize] = Some(cc);
+    pid_cc[index.unwrap()] = Some(cc);
 }
 
 fn process_packet(packet: &[u8], pid_name: &mut[Option<u16>], pid_cc: &mut[Option<u16>]) {
