@@ -9,13 +9,13 @@ use time::*;
 
 static PACKET_STATISTICS_INTERVAL: i32 = 50000;
 
-fn get_pid_cc(pid_name: &[u16], pid_cc: &[u16], pid: u16) -> u16 {
+fn get_pid_cc(pid_name: &[u16], pid_cc: &[u16], pid: u16) -> Option<u16> {
     for i in range(0us, 10) {
         if pid_name[i] == pid {
-            return pid_cc[i];
+            return Some(pid_cc[i]);
         }
     }
-    return -1;
+    return None;
 }
 
 fn set_pid_cc(pid_name: &mut[u16], pid_cc: &mut[u16], pid: u16, cc: u16) {
@@ -47,7 +47,7 @@ fn process_packet(packet: &[u8], pid_name: &mut[u16], pid_cc: &mut[u16]) {
     let mut cc: u16;
     let mut scrambled;
     let mut position = 0;
-    let mut last_cc: u16;
+    let mut last_cc: Option<u16>;
     while position + 187 < 1316 {
         payload = (packet[position + 3] & 16) != 0;
         pid = 256 * (packet[position + 1] as u16 & 0x1f) + packet[position + 2] as u16;
@@ -57,9 +57,10 @@ fn process_packet(packet: &[u8], pid_name: &mut[u16], pid_cc: &mut[u16]) {
             continue;
         }
         last_cc = get_pid_cc(pid_name, pid_cc, pid);
-        if last_cc != -1 {
-            if 16 <= pid && pid <= 8190 && cc != last_cc && (last_cc != 15 && cc != 0) && payload {
-                println!("CC Error in PID: {}, LastCC: {}, CC: {}", pid, last_cc, cc);
+        if last_cc.is_some() {
+            let lcc = last_cc.unwrap();
+            if 16 <= pid && pid <= 8190 && cc != lcc && (lcc != 15 && cc != 0) && payload {
+                println!("CC Error in PID: {}, LastCC: {}, CC: {}", pid, lcc, cc);
             }
             if scrambled {
                 println!("Scrambled packet");
