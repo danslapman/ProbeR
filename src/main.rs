@@ -120,7 +120,7 @@ fn main() {
 
                 if packets_received == PACKET_STATISTICS_INTERVAL {
                     let new_time = now().to_timespec();
-                    let delta = (new_time - last_stat_time).num_milliseconds() as u32;
+                    let delta = (new_time - last_stat_time).num_seconds() as u32;
                     let pps = PACKET_STATISTICS_INTERVAL / delta;
                     let speed = ((PACKET_STATISTICS_INTERVAL * 1316 / delta) / 1000) * 8;
                     println!("Bitrate: {} Mbps. PPS: {} pps.", speed, pps);
