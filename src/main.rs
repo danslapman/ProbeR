@@ -9,28 +9,28 @@ use time::*;
 
 static PACKET_STATISTICS_INTERVAL: i32 = 50000;
 
-fn get_pid_cc(pid_name: &[u16], pid_cc: &[u16], pid: u16) -> Option<u16> {
+fn get_pid_cc(pid_name: &[Option<u16>], pid_cc: &[Option<u16>], pid: u16) -> Option<u16> {
     for i in range(0us, 10) {
-        if pid_name[i] == pid {
-            return Some(pid_cc[i]);
+        if pid_name[i].is_some() && pid_name[i].unwrap() == pid {
+            return pid_cc[i];
         }
     }
     return None;
 }
 
-fn set_pid_cc(pid_name: &mut[u16], pid_cc: &mut[u16], pid: u16, cc: u16) {
+fn set_pid_cc(pid_name: &mut[Option<u16>], pid_cc: &mut[Option<u16>], pid: u16, cc: u16) {
     let mut index = -1i16;
     for i in range(0us, 10) {
-        if pid_name[i] == pid {
+        if pid_name[i].is_some() && pid_name[i].unwrap() == pid {
             index = i as i16;
             break;
         }
     }
     if index == -1i16 {
         for i in range(0us, 10) {
-            if pid_name[i] == -1 {
+            if pid_name[i].is_none() {
                 index = i as i16;
-                pid_name[i] = pid;
+                pid_name[i] = Some(pid);
                 break;
             }
         }
@@ -38,10 +38,10 @@ fn set_pid_cc(pid_name: &mut[u16], pid_cc: &mut[u16], pid: u16, cc: u16) {
     if index == -1 {
         panic!("PID array is full");
     }
-    pid_cc[index as usize] = cc;
+    pid_cc[index as usize] = Some(cc);
 }
 
-fn process_packet(packet: &[u8], pid_name: &mut[u16], pid_cc: &mut[u16]) {
+fn process_packet(packet: &[u8], pid_name: &mut[Option<u16>], pid_cc: &mut[Option<u16>]) {
     let mut payload;
     let mut pid: u16;
     let mut cc: u16;
@@ -81,8 +81,8 @@ fn main() {
 
     let multicast_addr: IpAddr = args[1].as_slice().parse().expect("Invalid value for multicast address!");
 
-    let mut pid_name: [u16; 10] = [0u16; 10];
-    let mut pid_cc: [u16; 10] = [0u16; 10];
+    let mut pid_name: [Option<u16>; 10] = [None; 10];
+    let mut pid_cc: [Option<u16>; 10] = [None; 10];
     let mut first_packet_received = false;
     let mut packets_received = 0i32;
     let mut last_stat_time = now().to_timespec();
