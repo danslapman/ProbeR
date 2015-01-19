@@ -123,7 +123,7 @@ fn main() {
                     let delta = (new_time - last_stat_time).num_seconds() as u32;
                     let pps = PACKET_STATISTICS_INTERVAL / delta;
                     let speed = ((PACKET_STATISTICS_INTERVAL * 1316 / delta) / 1000) * 8;
-                    println!("Bitrate: {} Mbps. PPS: {} pps.", speed, pps);
+                    println!("Bitrate: {} kbps. PPS: {} pps.", speed, pps);
                     last_stat_time = new_time;
                     packets_received = 0;
                 }
