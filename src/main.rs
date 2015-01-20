@@ -10,6 +10,11 @@ use time::*;
 static PACKET_STATISTICS_INTERVAL: u32 = 50000;
 static MAX_PID_COUNT: usize = 8192;
 
+fn show_message(level: &str, message: &str) {
+    let time_string = time::strftime("%d:%m:%Y %H:%M:%S", &now()).unwrap();
+    println!("{} {}: {}", time_string, level, message);
+}
+
 fn get_pid_cc(pid_name: &[Option<u16>], pid_cc: &[Option<u16>], pid: u16) -> Option<u16> {
     for i in range(0us, MAX_PID_COUNT) {
         if pid_name[i].is_some() && pid_name[i].unwrap() == pid {
@@ -58,10 +63,10 @@ fn process_packet(packet: &[u8], pid_name: &mut[Option<u16>], pid_cc: &mut[Optio
         if last_cc.is_some() {
             let lcc = last_cc.unwrap();
             if 16 <= pid && pid <= 8190 && cc != lcc + 1 && (lcc != 15 && cc != 0) && payload {
-                println!("CC Error in PID: {}, LastCC: {}, CC: {}", pid, lcc, cc);
+                show_message("ERROR", format!("CC Error in PID: {}, LastCC: {}, CC: {}", pid, lcc, cc).as_slice());
             }
             if scrambled {
-                println!("Scrambled packet");
+                show_message("ERROR", "Scrambled packet");
             }
         }
         set_pid_cc(pid_name, pid_cc, pid, cc);
@@ -95,10 +100,10 @@ fn main() {
     let join_res = socket.join_multicast(multicast_addr);
     match join_res {
         Err(e) => {
-            println!("Join error: {}", e);
+            show_message("ERROR", format!("Join error: {}", e).as_slice());
             return;
         },
-        _ => println!("Joined successfully")
+        _ => show_message("INFO", "Joined successfully")
     }
 
     let mut msg_buff = [0u8; 1316];
@@ -106,7 +111,7 @@ fn main() {
         let data = socket.recv_from(&mut msg_buff);
         match data {
             Err(e) => {
-                println!("Error receiving data: {}", e);
+                show_message("ERROR", format!("Error receiving data: {}", e).as_slice());
                 if first_packet_received {break;}
             },
             Ok((amount, _)) => {
@@ -123,7 +128,7 @@ fn main() {
                     let delta = (new_time - last_stat_time).num_seconds() as u32;
                     let pps = PACKET_STATISTICS_INTERVAL / delta;
                     let speed = ((PACKET_STATISTICS_INTERVAL * 1316 / delta) / 1000) * 8;
-                    println!("Bitrate: {} kbps. PPS: {} pps.", speed, pps);
+                    show_message("INFO", format!("Bitrate: {} kbps. PPS: {} pps.", speed, pps).as_slice());
                     last_stat_time = new_time;
                     packets_received = 0;
                 }
