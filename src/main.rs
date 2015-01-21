@@ -76,13 +76,18 @@ fn process_packet(packet: &[u8], pid_name: &mut[Option<u16>], pid_cc: &mut[Optio
 
 fn main() {
     let args = os::args();
-    if args.len() != 2 {
+    if args.len() != 2 && args.len() != 3 {
         println!("Usage:");
-        println!("prober <multicast_group>");
+        println!("prober <multicast_group> (<interface_ip>)");
         return;
     }
 
     let multicast_addr: IpAddr = args[1].as_slice().parse().expect("Invalid value for multicast address!");
+    let mut interface_ip: Option<IpAddr> = None;
+
+    if (args.len() == 3) {
+        interface_ip = Some(args[2].as_slice().parse().expect("Invalid value for interface IP!"));
+    }
 
     let mut pid_name: [Option<u16>; 8192] = [None; 8192];
     let mut pid_cc: [Option<u16>; 8192] = [None; 8192];
@@ -90,7 +95,7 @@ fn main() {
     let mut packets_received = 0u32;
     let mut last_stat_time = now().to_timespec();
 
-    let addr = SocketAddr{ ip: Ipv4Addr(0, 0, 0, 0), port: 1234 };
+    let addr = SocketAddr{ ip: interface_ip.unwrap_or(Ipv4Addr(0, 0, 0, 0)), port: 1234 };
 
     let mut socket = match UdpSocket::bind(addr) {
         Ok(s) => s,
