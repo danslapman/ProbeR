@@ -97,7 +97,7 @@ fn main() {
 
     let addr = SocketAddr{ ip: interface_ip.unwrap_or(Ipv4Addr(0, 0, 0, 0)), port: 1234 };
 
-    let mut socket = match UdpSocket::bind(addr) {
+    let mut socket = match UdpSocket::bind_reusable(addr) {
         Ok(s) => s,
         Err(e) => panic!("couldn't bind socket: {}", e),
     };
