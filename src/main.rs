@@ -52,7 +52,7 @@ fn process_packet(packet: &[u8], pid_name: &mut[Option<u16>], pid_cc: &mut[Optio
     let mut position = 0;
     let mut last_cc: Option<u16>;
     while position + 187 < 1316 {
-        payload = (packet[position + 3] & 16) != 0;
+        payload = (packet[position + 3] & 16) == 16;
         pid = 256 * (packet[position + 1] as u16 & 0x1f) + packet[position + 2] as u16;
         cc = packet[position + 3] as u16 & 0x0f;
         scrambled = (packet[position + 3] & 192) != 0;
@@ -66,7 +66,7 @@ fn process_packet(packet: &[u8], pid_name: &mut[Option<u16>], pid_cc: &mut[Optio
                 show_message("ERROR", format!("CC Error in PID: {}, LastCC: {}, CC: {}", pid, lcc, cc).as_slice());
             }
             if scrambled {
-                show_message("ERROR", "Scrambled packet");
+                show_message("ERROR", format!("Scrambled packet. PID: {}", pid).as_slice());
             }
         }
         set_pid_cc(pid_name, pid_cc, pid, cc);
@@ -115,8 +115,8 @@ fn main() {
                 if first_packet_received {break;}
             },
             Ok((amount, _)) => {
-                //println!("Received {} bytes", amount);
                 if !first_packet_received {
+                    show_message("INFO", "First packet received");
                     first_packet_received = true;
                     last_stat_time = now().to_timespec();
                 }
