@@ -11,7 +11,7 @@ static PACKET_STATISTICS_INTERVAL: u32 = 50000;
 static MAX_PID_COUNT: usize = 8192;
 
 fn show_message(level: &str, message: &str) {
-    let time_string = time::strftime("%d:%m:%Y %H:%M:%S", &now()).unwrap();
+    let time_string = time::strftime("%d.%m.%Y %H:%M:%S", &now()).unwrap();
     println!("{} {}: {}", time_string, level, message);
 }
 
