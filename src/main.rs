@@ -108,11 +108,11 @@ fn main() {
 
     let mut msg_buff = [0u8; 1316];
     loop {
+        socket.set_timeout(Some(5000));
         let data = socket.recv_from(&mut msg_buff);
         match data {
             Err(e) => {
                 show_message("ERROR", format!("Error receiving data: {}", e).as_slice());
-                if first_packet_received {break;}
             },
             Ok((amount, _)) => {
                 if !first_packet_received {
