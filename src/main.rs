@@ -1,10 +1,9 @@
 extern crate time;
 
 use std::os;
-use std::io::net::udp::UdpSocket;
-use std::io::net::ip::{Ipv4Addr, SocketAddr};
-use std::io::net::ip::IpAddr;
-use std::num::ToPrimitive;
+use std::old_io::net::udp::UdpSocket;
+use std::old_io::net::ip::{Ipv4Addr, SocketAddr};
+use std::old_io::net::ip::IpAddr;
 use time::*;
 
 static PACKET_STATISTICS_INTERVAL: u32 = 50000;
@@ -85,7 +84,7 @@ fn main() {
     let multicast_addr: IpAddr = args[1].as_slice().parse().expect("Invalid value for multicast address!");
     let mut interface_ip: Option<IpAddr> = None;
 
-    if (args.len() == 3) {
+    if args.len() == 3 {
         interface_ip = Some(args[2].as_slice().parse().expect("Invalid value for interface IP!"));
     }
 
@@ -119,7 +118,7 @@ fn main() {
             Err(e) => {
                 show_message("ERROR", format!("Error receiving data: {}", e).as_slice());
             },
-            Ok((amount, _)) => {
+            Ok((_, _)) => {
                 if !first_packet_received {
                     show_message("INFO", "First packet received");
                     first_packet_received = true;
