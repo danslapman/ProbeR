@@ -81,11 +81,19 @@ fn main() {
         return;
     }
 
-    let multicast_addr: IpAddr = args[1].as_slice().parse().expect("Invalid value for multicast address!");
+    let multicast_addr: IpAddr = match args[1].as_slice().parse() {
+        Ok(addr) => addr,
+        Err(_) => panic!("Invalid value for multicast address!")
+    };
+
     let mut interface_ip: Option<IpAddr> = None;
 
     if args.len() == 3 {
-        interface_ip = Some(args[2].as_slice().parse().expect("Invalid value for interface IP!"));
+        let iface_ip_addr = match args[2].as_slice().parse() {
+            Ok(addr) => addr,
+            Err(_) => panic!("Invalid value for interface IP!")
+        };
+        interface_ip = Some(iface_ip_addr);
     }
 
     let mut pid_name: [Option<u16>; 8192] = [None; 8192];
