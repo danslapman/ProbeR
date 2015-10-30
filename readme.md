@@ -1,5 +1,5 @@
 # ProbeR
-ProbeR is a simple multicast stream analyser utility written in Rust.
+ProbeR is a simple MPEG-TS stream analyser utility written in Rust.
 
 ProbeR can do the following things:
 * Detect CC errors
