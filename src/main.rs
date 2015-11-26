@@ -153,6 +153,4 @@ fn main() {
             }
         }
     }
-
-    drop(socket);
 }
