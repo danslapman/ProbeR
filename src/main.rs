@@ -11,7 +11,7 @@ static MAX_PID_COUNT: usize = 8192;
 
 fn show_message(level: &str, message: &str) {
     let time_string = Local::now().format("%d.%m.%Y %H:%M:%S");
-    println!("{} {}: {}", time_string, level, message);
+    println!("[{}] {}: {}", time_string, level, message);
 }
 
 fn get_pid_cc(pid_name: &[Option<u16>], pid_cc: &[Option<u16>], pid: u16) -> Option<u16> {
