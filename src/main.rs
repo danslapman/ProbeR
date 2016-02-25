@@ -1,16 +1,16 @@
-extern crate time;
+extern crate chrono;
 extern crate net2;
 #[macro_use] extern crate clap;
 
 use std::net::{Ipv4Addr, SocketAddrV4};
-use time::*;
+use chrono::Local;
 use net2::{UdpBuilder, UdpSocketExt};
 use clap::{Arg, App};
 
 static MAX_PID_COUNT: usize = 8192;
 
 fn show_message(level: &str, message: &str) {
-    let time_string = time::strftime("%d.%m.%Y %H:%M:%S", &now()).unwrap();
+    let time_string = Local::now().format("%d.%m.%Y %H:%M:%S");
     println!("{} {}: {}", time_string, level, message);
 }
 
@@ -103,7 +103,7 @@ fn main() {
     let mut pid_cc: [Option<u16>; 8192] = [None; 8192];
     let mut first_packet_received = false;
     let mut packets_received = 0u32;
-    let mut last_stat_time = now().to_timespec();
+    let mut last_stat_time = Local::now();
 
     let addr = SocketAddrV4::new(interface_ip, 1234);
 
@@ -137,13 +137,13 @@ fn main() {
                 if !first_packet_received {
                     show_message("INFO", "First packet received");
                     first_packet_received = true;
-                    last_stat_time = now().to_timespec();
+                    last_stat_time = Local::now();
                 }
                 process_packet(&msg_buff, &mut pid_name, &mut pid_cc);
                 packets_received += 1;
 
                 if packets_received == stat_interval {
-                    let new_time = now().to_timespec();
+                    let new_time = Local::now();
                     let delta = (new_time - last_stat_time).num_seconds() as u32;
                     let pps = stat_interval / delta;
                     let speed = ((stat_interval * 1316 / delta) / 1000) * 8;
