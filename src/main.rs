@@ -1,12 +1,12 @@
 extern crate time;
 extern crate net2;
+#[macro_use] extern crate clap;
 
-use std::env;
 use std::net::{Ipv4Addr, SocketAddrV4};
 use time::*;
 use net2::{UdpBuilder, UdpSocketExt};
+use clap::{Arg, App};
 
-static PACKET_STATISTICS_INTERVAL: u32 = 50000;
 static MAX_PID_COUNT: usize = 8192;
 
 fn show_message(level: &str, message: &str) {
@@ -74,29 +74,30 @@ fn process_packet(packet: &[u8], pid_name: &mut[Option<u16>], pid_cc: &mut[Optio
 }
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
-    if args.len() != 2 && args.len() != 3 {
-        println!("Usage:");
-        println!("prober <multicast_group> (<interface_ip>)");
-        return;
-    }
-
-    let multicast_addr: Ipv4Addr = match args[1].trim().parse() {
-        Ok(addr) => addr,
-        Err(_) => panic!("Invalid value for multicast address!")
-    };
-
-    let interface_ip: Ipv4Addr;
-
-    if args.len() == 3 {
-        let iface_ip_addr = match args[2].trim().parse() {
-            Ok(addr) => addr,
-            Err(_) => panic!("Invalid value for interface IP!")
-        };
-        interface_ip = iface_ip_addr;
-    } else {
-    	interface_ip = Ipv4Addr::new(0, 0, 0, 0);
-    }
+    let matches = App::new("ProbeR")
+        .version("0.1")
+        .about("MPEG-TS stream analyser utility")
+        .author("Daniel Slapman <danslapman@gmail.com>")
+        .arg(Arg::with_name("multicast group")
+            .help("IP address representing multicast group")
+            .required(true)
+            .index(1))
+        .arg(Arg::with_name("interface address")
+            .help("IP address of network interface")
+            .index(2))
+        .arg(Arg::with_name("sample length")
+            .help("Length of sample (in packets)")
+            .long("sl")
+            .takes_value(true))
+        .arg(Arg::with_name("run time")
+            .help("Maximum running time (in seconds)")
+            .long("rt")
+            .takes_value(true))
+        .get_matches(); 
+    
+    let multicast_addr = value_t!(matches, "multicast group", Ipv4Addr).expect("Invalid value for multicast address!");
+    let interface_ip = value_t!(matches, "interface address", Ipv4Addr).unwrap_or(Ipv4Addr::new(0, 0, 0, 0));
+    let stat_interval = value_t!(matches, "sample length", u32).unwrap_or(50000);
 
     let mut pid_name: [Option<u16>; 8192] = [None; 8192];
     let mut pid_cc: [Option<u16>; 8192] = [None; 8192];
@@ -141,11 +142,11 @@ fn main() {
                 process_packet(&msg_buff, &mut pid_name, &mut pid_cc);
                 packets_received += 1;
 
-                if packets_received == PACKET_STATISTICS_INTERVAL {
+                if packets_received == stat_interval {
                     let new_time = now().to_timespec();
                     let delta = (new_time - last_stat_time).num_seconds() as u32;
-                    let pps = PACKET_STATISTICS_INTERVAL / delta;
-                    let speed = ((PACKET_STATISTICS_INTERVAL * 1316 / delta) / 1000) * 8;
+                    let pps = stat_interval / delta;
+                    let speed = ((stat_interval * 1316 / delta) / 1000) * 8;
                     show_message("INFO", format!("Bitrate: {} kbps. PPS: {} pps.", speed, pps).as_ref());
                     last_stat_time = new_time;
                     packets_received = 0;

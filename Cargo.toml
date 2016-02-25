@@ -1,9 +1,10 @@
 [package]
 
 name = "prober"
-version = "0.0.1"
+version = "0.1.0"
 authors = ["Daniil Smirnov <danslapman@gmail.com>"]
 
 [dependencies]
-time = "0.1.34"
-net2 = "0.2.21"
+time = "0.1"
+net2 = "0.2"
+clap = "2.1"
