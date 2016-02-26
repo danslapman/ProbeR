@@ -85,6 +85,11 @@ fn main() {
         .arg(Arg::with_name("interface address")
             .help("IP address of network interface")
             .index(2))
+        .arg(Arg::with_name("port")
+            .help("Port to listen")
+            .long("port")
+            .short("p")
+            .takes_value(true))
         .arg(Arg::with_name("sample length")
             .help("Length of sample (in packets)")
             .long("sl")
@@ -96,6 +101,7 @@ fn main() {
         .get_matches(); 
     
     let multicast_addr = value_t!(matches, "multicast group", Ipv4Addr).expect("Invalid value for multicast address!");
+    let port = value_t!(matches, "port", u16).unwrap_or(1234);
     let interface_ip = value_t!(matches, "interface address", Ipv4Addr).unwrap_or(Ipv4Addr::new(0, 0, 0, 0));
     let stat_interval = value_t!(matches, "sample length", u32).unwrap_or(50000);
     let run_time = value_t!(matches, "run time", i64).ok();
@@ -106,7 +112,7 @@ fn main() {
     let mut packets_received = 0u32;
     let mut last_stat_time = Local::now();
 
-    let addr = SocketAddrV4::new(interface_ip, 1234);
+    let addr = SocketAddrV4::new(interface_ip, port);
 
 	let socket_builder = UdpBuilder::new_v4().expect("Could not create builder!");
 	socket_builder.reuse_address(true).expect("Could to reuse address");
