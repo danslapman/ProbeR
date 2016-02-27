@@ -166,4 +166,6 @@ fn main() {
             break;
         }
     }
+    
+    drop(socket);
 }
