@@ -94,17 +94,17 @@ fn main() {
             .help("Length of sample (in packets)")
             .long("sl")
             .takes_value(true))
-        .arg(Arg::with_name("run time")
-            .help("Maximum running time (in seconds)")
-            .long("rt")
-            .takes_value(true))
+        .arg(Arg::with_name("once")
+            .help("Sample once and quit")
+            .long("once")
+            .short("o"))
         .get_matches(); 
     
     let multicast_addr = value_t!(matches, "multicast group", Ipv4Addr).expect("Invalid value for multicast address!");
     let port = value_t!(matches, "port", u16).unwrap_or(1234);
     let interface_ip = value_t!(matches, "interface address", Ipv4Addr).unwrap_or(Ipv4Addr::new(0, 0, 0, 0));
     let stat_interval = value_t!(matches, "sample length", u32).unwrap_or(50000);
-    let run_time = value_t!(matches, "run time", i64).ok();
+    let sample_once = matches.is_present("once");
 
     let mut pid_name: [Option<u16>; 8192] = [None; 8192];
     let mut pid_cc: [Option<u16>; 8192] = [None; 8192];
@@ -133,7 +133,6 @@ fn main() {
         _ => show_message("INFO", "Joined successfully")
     }
 
-    let start_time = Local::now();
     let mut msg_buff = [0u8; 1316];
     loop {
         let data = socket.recv_from(&mut msg_buff);
@@ -162,7 +161,7 @@ fn main() {
             }
         }
         
-        if run_time.is_some() && (last_stat_time - start_time).num_seconds() > run_time.unwrap() {
+        if sample_once {
             break;
         }
     }
