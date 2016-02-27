@@ -104,6 +104,7 @@ fn main() {
     let port = value_t!(matches, "port", u16).unwrap_or(1234);
     let interface_ip = value_t!(matches, "interface address", Ipv4Addr).unwrap_or(Ipv4Addr::new(0, 0, 0, 0));
     let stat_interval = value_t!(matches, "sample length", u32).unwrap_or(50000);
+    let stat_interval_f = stat_interval as f32;
     let sample_once = matches.is_present("once");
 
     let mut pid_name: [Option<u16>; 8192] = [None; 8192];
@@ -151,10 +152,10 @@ fn main() {
 
                 if packets_received == stat_interval {
                     let new_time = Local::now();
-                    let delta = (new_time - last_stat_time).num_seconds() as u32;
-                    let pps = stat_interval / delta;
-                    let speed = ((stat_interval * 1316 / delta) / 1000) * 8;
-                    show_message("INFO", format!("Bitrate: {} kbps. PPS: {} pps.", speed, pps).as_ref());
+                    let delta = (new_time - last_stat_time).num_seconds() as f32;
+                    let pps = stat_interval_f / delta;
+                    let speed = ((stat_interval_f * 1316f32 / delta) / 1000f32) * 8f32;
+                    show_message("INFO", format!("Bitrate: {} kbps. PPS: {} pps.", speed as i32, pps as i32).as_ref());
                     last_stat_time = new_time;
                     packets_received = 0;
                 }
