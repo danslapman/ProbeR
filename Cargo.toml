@@ -7,4 +7,4 @@ authors = ["Daniil Smirnov <danslapman@gmail.com>"]
 [dependencies]
 net2 = "0.2"
 chrono = "0.2"
-clap = "2.1"
+clap = "2.5"
