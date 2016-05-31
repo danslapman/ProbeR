@@ -75,7 +75,7 @@ fn process_packet(packet: &[u8], pid_name: &mut[Option<u16>], pid_cc: &mut[Optio
 
 fn main() {
     let matches = App::new("ProbeR")
-        .version("0.1")
+        .version("1.0")
         .about("MPEG-TS stream analyser utility")
         .author("Daniel Slapman <danslapman@gmail.com>")
         .arg(Arg::with_name("multicast group")
@@ -115,8 +115,8 @@ fn main() {
 
     let addr = SocketAddrV4::new(interface_ip, port);
 
-	let socket_builder = UdpBuilder::new_v4().expect("Could not create builder!");
-	socket_builder.reuse_address(true).expect("Could to reuse address");
+	let socket_builder = UdpBuilder::new_v4().expect("Could not create builder");
+	socket_builder.reuse_address(true).expect("Could not reuse address");
 
     let socket = match socket_builder.bind(addr) {
         Ok(s) => s,
