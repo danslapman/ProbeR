@@ -1,10 +1,11 @@
 pub struct ContinuityChecker {
+    pub is_running: bool,
     pub flags: [bool; 16]
 }
 
 impl ContinuityChecker {
     pub fn new() -> ContinuityChecker {
-        ContinuityChecker { flags: [false; 16] }
+        ContinuityChecker { flags: [false; 16], is_running: false }
     }
 
     pub fn invalidate(&mut self) -> () {
@@ -15,6 +16,14 @@ impl ContinuityChecker {
 
     pub fn set_valid(&mut self, cc: u16) -> () {
         self.flags[cc as usize] = true;
+    }
+
+    pub fn start_with(&mut self, cc: u16) -> () {
+        let upper_bound = cc as usize;
+        for i in 0..upper_bound {
+            self.flags[i] = true;
+        }
+        self.is_running = true;
     }
 
     pub fn is_valid(&self) -> bool {

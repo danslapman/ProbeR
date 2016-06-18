@@ -5,79 +5,53 @@ extern crate net2;
 pub mod cc_checker;
 
 use std::net::{Ipv4Addr, SocketAddrV4};
+use std::collections::HashMap;
 use chrono::Local;
 use net2::{UdpBuilder, UdpSocketExt};
 use clap::{Arg, App};
-
-static MAX_PID_COUNT: usize = 8192;
+use cc_checker::ContinuityChecker;
 
 fn show_message(level: &str, message: &str) {
     let time_string = Local::now().format("%d.%m.%Y %H:%M:%S");
     println!("[{}] {}: {}", time_string, level, message);
 }
 
-fn get_pid_cc(pid_name: &[Option<u16>], pid_cc: &[Option<u16>], pid: u16) -> Option<u16> {
-    for i in 0usize..MAX_PID_COUNT {
-        if pid_name[i].is_some() && pid_name[i].unwrap() == pid {
-            return pid_cc[i];
-        }
-    }
-    return None;
-}
-
-fn set_pid_cc(pid_name: &mut[Option<u16>], pid_cc: &mut[Option<u16>], pid: u16, cc: u16) {
-    let mut index: Option<usize> = None; 
-    for i in 0usize..MAX_PID_COUNT {
-        if pid_name[i].is_some() && pid_name[i].unwrap() == pid {
-            index = Some(i);
-            break;
-        }
-    }
-    if index.is_none() {
-        for i in 0usize..MAX_PID_COUNT {
-            if pid_name[i].is_none() {
-                index = Some(i);
-                pid_name[i] = Some(pid);
-                break;
-            }
-        }
-    }
-    pid_cc[index.expect("PID array is full")] = Some(cc);
-}
-
-fn process_packet(packet: &[u8], pid_name: &mut[Option<u16>], pid_cc: &mut[Option<u16>]) {
+fn process_packet(packet: &[u8], checkers: &mut HashMap<u16, ContinuityChecker>) {
     let mut payload;
     let mut pid: u16;
     let mut cc: u16;
     let mut scrambled;
     let mut position = 0;
-    let mut last_cc: Option<u16>;
     while position + 187 < 1316 {
         payload = (packet[position + 3] & 16) == 16;
         pid = 256 * (packet[position + 1] as u16 & 0x1f) + packet[position + 2] as u16;
         cc = packet[position + 3] as u16 & 0x0f;
         scrambled = (packet[position + 3] & 192) != 0;
+        let mut continuity_checker = checkers.entry(pid).or_insert(ContinuityChecker::new());
         if packet[position] != 71 {
             continue;
         }
-        last_cc = get_pid_cc(pid_name, pid_cc, pid);
-        if last_cc.is_some() {
-            let lcc = last_cc.unwrap();
-            if 16 <= pid && pid <= 8190 && cc != lcc + 1 && (lcc != 15 && cc != 0) && payload {
-                show_message("ERROR", format!("CC Error in PID: {}, LastCC: {}, CC: {}", pid, lcc, cc).as_ref());
+
+        if continuity_checker.is_running {
+            if 16 <= pid && pid <= 8190 && cc == 0 && payload && !continuity_checker.is_valid() {
+                show_message("ERROR", format!("CC Error in PID: {}", pid).as_ref());
+                continuity_checker.invalidate();
             }
             if scrambled {
                 show_message("ERROR", format!("Scrambled packet. PID: {}", pid).as_ref());
             }
+            continuity_checker.set_valid(cc);
+        } else {
+            continuity_checker.start_with(cc);
         }
-        set_pid_cc(pid_name, pid_cc, pid, cc);
+        
         position += 188;
     }
 }
 
 fn main() {
     let matches = App::new("ProbeR")
-        .version("1.0")
+        .version("1.1")
         .about("MPEG-TS stream analyser utility")
         .author("Daniel Slapman <danslapman@gmail.com>")
         .arg(Arg::with_name("multicast group")
@@ -109,8 +83,7 @@ fn main() {
     let stat_interval_f = stat_interval as f32;
     let sample_once = matches.is_present("once");
 
-    let mut pid_name: [Option<u16>; 8192] = [None; 8192];
-    let mut pid_cc: [Option<u16>; 8192] = [None; 8192];
+    let mut cont_checkers: HashMap<u16, ContinuityChecker> = HashMap::new();
     let mut first_packet_received = false;
     let mut packets_received = 0u32;
     let mut last_stat_time = Local::now();
@@ -149,7 +122,7 @@ fn main() {
                     first_packet_received = true;
                     last_stat_time = Local::now();
                 }
-                process_packet(&msg_buff, &mut pid_name, &mut pid_cc);
+                process_packet(&msg_buff, &mut cont_checkers);
                 packets_received += 1;
 
                 if packets_received == stat_interval {
