@@ -1,6 +1,6 @@
 pub struct ContinuityChecker {
     pub is_running: bool,
-    pub flags: [bool; 16]
+    flags: [bool; 16]
 }
 
 impl ContinuityChecker {
