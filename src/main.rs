@@ -33,8 +33,10 @@ fn process_packet(packet: &[u8], checkers: &mut HashMap<u16, ContinuityChecker>)
         }
 
         if continuity_checker.is_running {
-            if 16 <= pid && pid <= 8190 && cc == 0 && payload && !continuity_checker.is_valid() {
-                show_message("ERROR", format!("CC Error in PID: {}", pid).as_ref());
+            if 16 <= pid && pid <= 8190 && cc == 0 && payload {
+                if !continuity_checker.is_valid() {
+                    show_message("ERROR", format!("CC Error in PID: {}", pid).as_ref());
+                }
                 continuity_checker.invalidate();
             }
             if scrambled {
